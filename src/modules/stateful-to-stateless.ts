@@ -4,7 +4,7 @@ import template from "@babel/template";
 import * as t from "@babel/types";
 import { transformFromAst } from "@babel/core";
 import { capitalizeFirstLetter } from "../utils";
-import { isHooksForFunctionalComponentsExperimentOn } from "../settings";
+import { isHooksForFunctionalComponentsExperimentOn, shouldShowConversionWarning } from "../settings";
 import { getReactImportReference, isExportedDeclaration } from "../ast-helpers";
 import {
   showInformationMessage,
@@ -212,7 +212,7 @@ export function statefulToStateless(component) {
         params: ["props"],
         propType:
           path.node.superTypeParameters &&
-          path.node.superTypeParameters.params.length
+            path.node.superTypeParameters.params.length
             ? path.node.superTypeParameters.params
             : null,
         paramDefaults: defaultPropsPath ? [defaultPropsPath.node.value] : [],
@@ -406,10 +406,11 @@ function resolveTypeAnnotation(propType: any) {
 
 export async function statefulToStatelessComponent() {
   try {
-    const answer = await showInformationMessage(
+    const answer = shouldShowConversionWarning() ? await showInformationMessage(
       "WARNING! All lifecycle methods and react instance methods would be removed. Are you sure you want to continue?",
       ["Yes", "No"]
-    );
+    ) : "Yes";
+
     if (answer === "Yes") {
       const selectionProccessingResult = statefulToStateless(selectedText());
       const persistantChanges = [
@@ -471,7 +472,7 @@ export function isStatefulComp(code) {
       ((classPath.superClass.object &&
         classPath.superClass.object.name === "React" &&
         supportedComponents.indexOf(classPath.superClass.property.name) !==
-          -1) ||
+        -1) ||
         supportedComponents.indexOf(classPath.superClass.name) !== -1)
     );
   };
